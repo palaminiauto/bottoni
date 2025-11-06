@@ -8,19 +8,25 @@
   body {
     font-family: Arial, sans-serif;
     background: linear-gradient(135deg, #dbeafe, #93c5fd);
-    height: 100vh;
+    min-height: 100vh;
     margin: 0;
     display: flex;
     justify-content: center;
     align-items: center;
+    padding: 20px;
   }
-
+  .container {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    max-width: 800px;
+    width: 100%;
+  }
   button {
-    background-color: #1a73e8;
     color: white;
-    font-size: 32px;
+    font-size: 28px;
     font-weight: bold;
-    padding: 50px 80px;
+    padding: 40px 60px;
     border: none;
     border-radius: 25px;
     cursor: pointer;
@@ -28,22 +34,48 @@
     box-shadow: 0 8px 20px rgba(0,0,0,0.2);
     transition: all 0.2s ease-in-out;
   }
-
   button:hover {
-    background-color: #155ec0;
     transform: scale(1.05);
+  }
+  .btn-rosso {
+    background-color: #dc2626;
+  }
+  .btn-rosso:hover {
+    background-color: #b91c1c;
+  }
+  .btn-verde {
+    background-color: #16a34a;
+  }
+  .btn-verde:hover {
+    background-color: #15803d;
+  }
+  .btn-giallo {
+    background-color: #eab308;
+  }
+  .btn-giallo:hover {
+    background-color: #ca8a04;
+  }
+  @media (max-width: 768px) {
+    button {
+      font-size: 22px;
+      padding: 30px 40px;
+    }
   }
 </style>
 </head>
 <body>
-
-  <button onclick="vai()">PREMI QUI PER PRENDERE APPUNTAMENTO</button>
-
-  <script>
-    function vai() {
-      window.location.href = "https://palaminiauto.github.io/sat/";
-    }
-  </script>
-
+  <div class="container">
+    <button class="btn-rosso" onclick="window.location.href='https://palaminiauto.github.io/sat/'">
+      LOCALIZZATORI SATELLITARI ASSICURATIVI o MOVEIN
+    </button>
+    
+    <button class="btn-verde" onclick="window.location.href='https://palaminiauto.github.io/manutenzione'">
+      MANUTENZIONE AUTO
+    </button>
+    
+    <button class="btn-giallo" onclick="window.location.href='https://palaminiauto.github.io/pneumatici'">
+      PNEUMATICI
+    </button>
+  </div>
 </body>
 </html>
