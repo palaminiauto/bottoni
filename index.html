@@ -35,7 +35,7 @@
   .avviso-importante { background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 15px; margin: 20px 0; font-size: 14px; line-height: 1.6; color: #856404; text-align: center; }
   .avviso-importante strong { display: block; font-size: 16px; margin-bottom: 8px; color: #000; }
   
-  #loadingOverlay, #sendingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #e6f0fa; z-index: 200; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; font-weight: 800; font-size: 20px; }
+  #loadingOverlay, #sendingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #e6f0fa; z-index: 200; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; font-weight: 600; font-size: 20px; color: #666; }
   .spinner { border: 8px solid #f3f3f3; border-top: 8px solid #1a73e8; border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; margin-bottom: 15px; }
   @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
@@ -286,16 +286,18 @@ function aggiornaVisibilita() {
     const filtrate = base.filter(d => {
       const dMin = d.toLowerCase();
       
-      // Nascondo la data se la stringa contiene la dicitura di oggi
-      if (dMin.includes(strOggi) || dMin.includes(strOggiPadded)) {
-        return false;
-      }
+      // Controllo se la data analizzata è quella di OGGI
+      const isOggi = dMin.includes(strOggi) || dMin.includes(strOggiPadded);
       
-      // Mostro la data di domani SOLO se la lavorazione è smontaggio
-      if (dMin.includes(strDomani) || dMin.includes(strDomaniPadded)) {
+      // Controllo se la data analizzata è quella di DOMANI
+      const isDomani = dMin.includes(strDomani) || dMin.includes(strDomaniPadded);
+      
+      // Se è oggi OPPURE è domani, mostra solo se la lavorazione è "smontaggio"
+      if (isOggi || isDomani) {
         return lav === "smontaggio";
       }
       
+      // Per tutti gli altri giorni futuri, mostra sempre
       return true;
     });
 
