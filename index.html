@@ -29,7 +29,6 @@
   
   .bottoni-tipo { display: flex; gap: 10px; justify-content: center; margin-top: 15px; }
   .bottoni-tipo button { background-color: #ccc; font-size: 16px; height: 70px; color: #333; }
-  /* Modifica 1: Tasto selezionato senza bordo nero ma rimane blu con testo bianco */
   .bottoni-tipo button.selezionato { background-color: #1a73e8; color: white; }
   
   #infoRiconsegna { background: #fff3cd; border: 2px solid #ffc107; padding: 15px; margin: 15px 0; border-radius: 8px; font-weight: bold; color: #856404; text-align: center; display: none; }
@@ -39,12 +38,26 @@
   #loadingOverlay, #sendingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #e6f0fa; z-index: 200; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
   .spinner { border: 8px solid #f3f3f3; border-top: 8px solid #1a73e8; border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; margin-bottom: 15px; }
   @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+  /* Overlay personalizzato per data non disponibile */
+  #dateUnavailableOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 300; justify-content: center; align-items: center; padding: 20px; }
+  .modal-content { background: #fff; padding: 30px; border-radius: 12px; text-align: center; max-width: 400px; width: 100%; border: 3px solid #f44336; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+  .modal-content h3 { color: #d32f2f; margin-top: 0; }
+  .modal-content p { font-size: 16px; line-height: 1.5; margin-bottom: 20px; }
 </style>
 </head>
 <body onload="init()">
 
 <div id="loadingOverlay"><div class="spinner"></div><p>Caricamento modulo in corso...</p></div>
 <div id="sendingOverlay" style="display:none;"><div class="spinner"></div><p id="sendingText">Invio in corso...</p></div>
+
+<div id="dateUnavailableOverlay">
+  <div class="modal-content">
+    <h3>⚠️ DATA NON PIÙ DISPONIBILE</h3>
+    <p>La data che avevi scelto è appena stata prenotata da un altro utente.<br><br>La lista è stata aggiornata, seleziona un nuovo orario per favore.</p>
+    <button type="button" onclick="chiudiAvvisoData()" style="background-color: #f44336;">AVANTI</button>
+  </div>
+</div>
 
 <div id="formWrapper" style="display:none;">
   <h2>PRENOTAZIONE APPUNTAMENTO LOCALIZZATORE SATELLITARE ASSICURATIVO o MOVE-IN</h2>
@@ -128,13 +141,13 @@
 
       <div id="infoRiconsegna"></div>
 
-      <div style="background:#ffe6e6; border:2px solid red; border-radius:8px; padding:12px; margin-top:15px; color:red; font-weight:bold; font-size:15px; text-align:center;">
-        ⏰ Si raccomanda di rispettare l'orario prescelto. Con un ritardo superiore ai 10 minuti l'appuntamento verrà considerato annullato.
-      </div>
-
       <div class="nav-buttons">
         <button type="button" class="btn-indietro" onclick="changeStep(-1)">Indietro</button>
         <button type="button" id="btnPrenota" onclick="verificaEinvia()">Prenota</button>
+      </div>
+
+      <div style="background:#ffe6e6; border:2px solid red; border-radius:8px; padding:12px; margin-top:20px; color:red; font-weight:bold; font-size:15px; text-align:center;">
+        ⏰ Si raccomanda di rispettare l'orario prescelto. Con un ritardo superiore ai 10 minuti l'appuntamento verrà considerato annullato.
       </div>
     </div>
   </form>
@@ -163,7 +176,6 @@ async function init() {
     dateDisponibiliMontaggio = data.dateMontaggio || [];
     dateDisponibiliAnomalia = data.dateAnomalia || [];
     
-    // Modifica 5: Ripristinato il debug
     console.log("Dati caricati con successo da Google Apps Script:");
     console.log(`- Date Montaggio libere: ${dateDisponibiliMontaggio.length}`);
     console.log(`- Date Anomalia libere: ${dateDisponibiliAnomalia.length}`);
@@ -188,7 +200,6 @@ function selezionaTipo(tipo) {
   
   document.getElementById("err_tipo").style.display = 'none';
   console.log("Tipologia selezionata:", tipo);
-  // Modifica 1: Tolto changeStep(1) automatico
 }
 
 function avantiStep1() {
@@ -199,7 +210,6 @@ function avantiStep1() {
   changeStep(1);
 }
 
-// Funzione helper per togliere il rosso dal campo appena l'utente inizia a scrivere/selezionare
 function rimuoviErrore(elemento) {
   elemento.classList.remove("input-error");
   const errDiv = document.getElementById("err_" + elemento.id);
@@ -216,12 +226,10 @@ function changeStep(n) {
   console.log("Navigazione allo Step:", currentStep);
 }
 
-// Modifica 2: Nuova validazione inline con bordi rossi e testi
 function validaCampiStep() {
   if (currentStep === 2) {
     let valido = true;
     
-    // Validazione Email (deve avere @ e .)
     const email = document.getElementById("email");
     const errEmail = document.getElementById("err_email");
     const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -231,7 +239,6 @@ function validaCampiStep() {
       valido = false;
     }
 
-    // Validazione altri campi Step 2
     const campiStandard = ["targa", "nomeCognome", "telefono", "compagnia"];
     for (let id of campiStandard) {
       const el = document.getElementById(id);
@@ -261,22 +268,34 @@ function aggiornaVisibilita() {
     wrap.style.display = "block";
     let base = lav === "anomalia" ? dateDisponibiliAnomalia : dateDisponibiliMontaggio;
     
-    // Modifica 4: Logica corrette date (nessuna oggi, domani solo se smontaggio)
+    // Convertitore mesi per match esatto del testo italiano
+    const mesiItaliani = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
+    
     const oggi = new Date();
     const domani = new Date(); domani.setDate(oggi.getDate() + 1);
     
-    // Formattiamo per confrontare l'inizio della stringa data fornita dal foglio excel (es: 22/10/...)
-    const strOggi = oggi.getDate().toString().padStart(2,'0') + "/" + (oggi.getMonth()+1).toString().padStart(2,'0');
-    const strDomani = domani.getDate().toString().padStart(2,'0') + "/" + (domani.getMonth()+1).toString().padStart(2,'0');
+    // Creo le stringhe: "25 febbraio" o "05 febbraio"
+    const strOggi = oggi.getDate() + " " + mesiItaliani[oggi.getMonth()];
+    const strOggiPadded = oggi.getDate().toString().padStart(2,'0') + " " + mesiItaliani[oggi.getMonth()];
     
-    console.log(`Filtro Date Applicato - Oggi: ${strOggi}, Domani: ${strDomani} - Lavorazione: ${lav}`);
+    const strDomani = domani.getDate() + " " + mesiItaliani[domani.getMonth()];
+    const strDomaniPadded = domani.getDate().toString().padStart(2,'0') + " " + mesiItaliani[domani.getMonth()];
+
+    console.log(`Filtro Testo Date - Oggi: ${strOggi}, Domani: ${strDomani}`);
 
     const filtrate = base.filter(d => {
-      // Usiamo startsWith oppure un match per sicurezza nel formato
-      if (d.includes(strOggi)) return false; // Nascondi sempre oggi
-      if (d.includes(strDomani)) {
-        return lav === "smontaggio"; // Mostra domani SOLO per smontaggio
+      const dMin = d.toLowerCase();
+      
+      // Nascondo la data se la stringa contiene la dicitura di oggi
+      if (dMin.includes(strOggi) || dMin.includes(strOggiPadded)) {
+        return false;
       }
+      
+      // Mostro la data di domani SOLO se la lavorazione è smontaggio
+      if (dMin.includes(strDomani) || dMin.includes(strDomaniPadded)) {
+        return lav === "smontaggio";
+      }
+      
       return true;
     });
 
@@ -306,7 +325,10 @@ function aggiornaRiconsegna() {
   }
 }
 
-// Modifica 6 e 3: La funzione di invio ora valida l'ultimo step, fa il check date incrociato e poi invia
+function chiudiAvvisoData() {
+  document.getElementById("dateUnavailableOverlay").style.display = "none";
+}
+
 async function verificaEinvia() {
   const elLavorazione = document.getElementById("lavorazione");
   const elNote = document.getElementById("notecliente");
@@ -316,7 +338,6 @@ async function verificaEinvia() {
   const note = elNote.value.trim();
   const dataScelta = elData.value;
 
-  // Modifica 3: Validazione STEP 4 inline
   let tuttoValido = true;
   
   if (!lav) {
@@ -325,7 +346,6 @@ async function verificaEinvia() {
     tuttoValido = false;
   }
   
-  // Note obbligatorie in casi specifici
   if (lav === "annullamento" || lav === "smontmont") {
     if (!note) {
       elNote.classList.add("input-error");
@@ -334,7 +354,6 @@ async function verificaEinvia() {
     }
   }
 
-  // Data obbligatoria se non è annullamento
   if (lav && lav !== "annullamento" && !dataScelta) {
     elData.classList.add("input-error");
     document.getElementById("err_dataAppuntamento").style.display = "block";
@@ -346,34 +365,28 @@ async function verificaEinvia() {
     return;
   }
 
-  // --- Modifica 6: Doppio controllo disponibilità data aggiornato ---
   document.getElementById("sendingText").innerHTML = "Controllo disponibilità date in corso...<br>Attendere...";
   document.getElementById("sendingOverlay").style.display = "flex";
   console.log("=== INIZIO CONTROLLO DISPONIBILITA' DATA ===");
-  console.log(`Data richiesta: ${dataScelta} per ${lav}`);
 
   try {
-    // 1. CHIEDE DI NUOVO LE DATE AL SERVER
     const response = await fetch(API_URL + '?action=getAllData');
     const checkData = await response.json();
-    console.log("Date aggiornate lette dal server:", checkData);
-    
     const dateAttuali = lav === "anomalia" ? checkData.dateAnomalia : checkData.dateMontaggio;
 
-    // 2. VERIFICA SE LA DATA È ANCORA PRESENTE
     if (lav !== "annullamento" && !dateAttuali.includes(dataScelta)) {
       console.warn("ATTENZIONE: La data non è più disponibile!");
       document.getElementById("sendingOverlay").style.display = "none";
-      alert("⚠️ DATA NON PIÙ DISPONIBILE: La data che avevi scelto è appena stata prenotata da un altro utente. La lista è stata aggiornata, seleziona un nuovo orario.");
       
-      // Mantiene i vecchi dati compilati, aggiorna solo la select delle date
+      // Mostra l'overlay personalizzato invece dell'alert
+      document.getElementById("dateUnavailableOverlay").style.display = "flex";
+      
       dateDisponibiliMontaggio = checkData.dateMontaggio || [];
       dateDisponibiliAnomalia = checkData.dateAnomalia || [];
-      aggiornaVisibilita(); // Rigenera le opzioni della tendina
+      aggiornaVisibilita();
       return; 
     }
 
-    // 3. SE È DISPONIBILE -> INVIO EFFETTIVO
     console.log("Data confermata disponibile. Procedo con l'invio.");
     document.getElementById("sendingText").innerHTML = "Invio dati in corso...<br>NON CHIUDERE LA PAGINA";
     
@@ -388,12 +401,8 @@ async function verificaEinvia() {
       dataAppuntamento: dataScelta
     };
 
-    console.log("Dati in invio:", payload);
-
     const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'salvaPrenotazione', dati: payload }) });
     const result = await res.json();
-
-    console.log("Risposta server post invio:", result);
 
     if (result.success) {
       document.getElementById("formWrapper").style.display = "none";
