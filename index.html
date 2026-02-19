@@ -54,7 +54,7 @@
 <div id="dateUnavailableOverlay">
   <div class="modal-content">
     <h3>⚠️ DATA NON PIÙ DISPONIBILE</h3>
-    <p>La data che avevi scelto è appena stata prenotata da un altro utente.<br><br>La lista è stata aggiornata, seleziona un nuovo orario per favore.</p>
+    <p>La data che avevi scelto è appena stata prenotata da un altro utente.<br><br>La lista è stata aggiornata, seleziona una nuova data per favore.</p>
     <button type="button" onclick="chiudiAvvisoData()" style="background-color: #f44336;">AVANTI</button>
   </div>
 </div>
@@ -320,7 +320,7 @@ function aggiornaRiconsegna() {
     let h = parseInt(match[1]), m = parseInt(match[2]) + durate[lav];
     while (m >= 60) { m -= 60; h += 1; }
     const nuovaOra = h.toString().padStart(2,'0') + ":" + m.toString().padStart(2,'0');
-    info.innerHTML = "data di riconsegna del veicolo stimata: " + dataTxt.replace(/\d{2}:\d{2}/, nuovaOra);
+    info.innerHTML = "Data di riconsegna del veicolo stimata: " + dataTxt.replace(/\d{2}:\d{2}/, nuovaOra);
     info.style.display = "block";
   }
 }
