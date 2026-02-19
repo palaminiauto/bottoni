@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -12,8 +11,12 @@
   h2 { text-align: center; font-size: 22px; margin-bottom: 10px; }
   h4 { text-align: center; font-size: 16px; color: #555; margin: 5px 0; font-weight: normal; }
   label { display: block; font-weight: bold; margin-top: 18px; font-size: 16px; text-align: center; }
-  input, select { width: 100%; padding: 16px 14px; margin-top: 5px; font-size: 20px; border-radius: 8px; border: 1px solid #ccc; display: block; text-align: center; }
+  input, select { width: 100%; padding: 16px 14px; margin-top: 5px; font-size: 20px; border-radius: 8px; border: 1px solid #ccc; display: block; text-align: center; transition: border 0.3s; }
   
+  /* Stili per errori validazione */
+  .input-error { border: 2px solid #dc3545 !important; background-color: #fff8f8; }
+  .error-msg { color: #dc3545; font-size: 14px; margin-top: 5px; margin-bottom: 5px; display: none; text-align: center; font-weight: bold; }
+
   /* Gestione Step */
   .step-container { display: none; }
   .step-active { display: block; animation: fadeIn 0.5s; }
@@ -21,20 +24,20 @@
 
   .nav-buttons { display: flex; gap: 10px; margin-top: 20px; }
   button { flex: 1; background-color: #1a73e8; color: white; border: none; cursor: pointer; font-size: 20px; padding: 18px; border-radius: 8px; font-weight: bold; transition: all 0.3s; }
-  button:hover:not(:disabled) { background: #1557b0; }
-  button:disabled { background-color: #ccc; cursor: not-allowed; }
+  button:hover { background: #1557b0; }
   .btn-indietro { background-color: #6c757d !important; }
   
   .bottoni-tipo { display: flex; gap: 10px; justify-content: center; margin-top: 15px; }
-  .bottoni-tipo button { background-color: #ccc; font-size: 16px; height: 70px; }
-  .bottoni-tipo button.selezionato { background-color: #1a73e8; border: 2px solid #000; }
+  .bottoni-tipo button { background-color: #ccc; font-size: 16px; height: 70px; color: #333; }
+  /* Modifica 1: Tasto selezionato senza bordo nero ma rimane blu con testo bianco */
+  .bottoni-tipo button.selezionato { background-color: #1a73e8; color: white; }
   
   #infoRiconsegna { background: #fff3cd; border: 2px solid #ffc107; padding: 15px; margin: 15px 0; border-radius: 8px; font-weight: bold; color: #856404; text-align: center; display: none; }
   .avviso-importante { background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 15px; margin: 20px 0; font-size: 14px; line-height: 1.6; color: #856404; text-align: center; }
   .avviso-importante strong { display: block; font-size: 16px; margin-bottom: 8px; color: #000; }
   
-  #loadingOverlay, #sendingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #e6f0fa; z-index: 200; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-  .spinner { border: 8px solid #f3f3f3; border-top: 8px solid #1a73e8; border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; }
+  #loadingOverlay, #sendingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #e6f0fa; z-index: 200; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+  .spinner { border: 8px solid #f3f3f3; border-top: 8px solid #1a73e8; border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; margin-bottom: 15px; }
   @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 </style>
 </head>
@@ -55,15 +58,33 @@
         <button type="button" id="btnAssicurativo" onclick="selezionaTipo('assicurativo')">ASSICURATIVO</button>
         <button type="button" id="btnMoveIn" onclick="selezionaTipo('movein')">MOVE-IN<br>(regione lombardia)</button>
       </div>
+      <div id="err_tipo" class="error-msg">Selezionare una tipologia</div>
+      <div class="nav-buttons">
+        <button type="button" onclick="avantiStep1()">Avanti</button>
+      </div>
     </div>
 
     <div id="step2" class="step-container">
-      <label>EMAIL:</label><input type="email" id="email" oninput="aggiornaStatoPrenota()">
-      <label>TARGA AUTO:</label><input type="text" id="targa" maxlength="7" style="text-transform:uppercase;" oninput="aggiornaStatoPrenota()">
-      <label>NOME E COGNOME ASSICURATO:</label><input type="text" id="nomeCognome" oninput="aggiornaStatoPrenota()">
-      <label>CONTATTO TELEFONICO:</label><input type="text" id="telefono" oninput="aggiornaStatoPrenota()">
+      <label>EMAIL:</label>
+      <input type="email" id="email" oninput="rimuoviErrore(this)">
+      <div id="err_email" class="error-msg">Inserire una mail valida</div>
+
+      <label>TARGA AUTO:</label>
+      <input type="text" id="targa" maxlength="7" style="text-transform:uppercase;" oninput="rimuoviErrore(this)">
+      <div id="err_targa" class="error-msg">Campo obbligatorio</div>
+
+      <label>NOME E COGNOME ASSICURATO:</label>
+      <input type="text" id="nomeCognome" oninput="rimuoviErrore(this)">
+      <div id="err_nomeCognome" class="error-msg">Campo obbligatorio</div>
+
+      <label>CONTATTO TELEFONICO:</label>
+      <input type="text" id="telefono" oninput="rimuoviErrore(this)">
+      <div id="err_telefono" class="error-msg">Campo obbligatorio</div>
+
       <label>NOME COMPAGNIA ASSICURATIVA o PROVIDER MOVE-IN</label>
-      <select id="compagnia" onchange="aggiornaStatoPrenota()"></select>
+      <select id="compagnia" onchange="rimuoviErrore(this)"></select>
+      <div id="err_compagnia" class="error-msg">Campo obbligatorio</div>
+
       <div class="nav-buttons">
         <button type="button" class="btn-indietro" onclick="changeStep(-1)">Indietro</button>
         <button type="button" onclick="changeStep(1)">Avanti</button>
@@ -85,7 +106,7 @@
 
     <div id="step4" class="step-container">
       <label>LAVORAZIONE RICHIESTA</label>
-      <select id="lavorazione" onchange="aggiornaVisibilita()">
+      <select id="lavorazione" onchange="aggiornaVisibilita(); rimuoviErrore(this)">
         <option value="" selected disabled>Seleziona...</option>
         <option value="montaggio">MONTAGGIO (massimo 50 minuti di fermo auto)</option>
         <option value="smontaggio">SMONTAGGIO (massimo 50 minuti di fermo auto)</option>
@@ -93,13 +114,16 @@
         <option value="anomalia">ANOMALIA-GUASTO-VERIFICA LOCALIZZATORE (massimo 3 ore di fermo auto)</option>
         <option value="annullamento">ANNULLAMENTO APPUNTAMENTO</option>
       </select>
+      <div id="err_lavorazione" class="error-msg">Selezionare una lavorazione</div>
 
       <label id="labelNoteCliente">EVENTUALI NOTE CLIENTE:</label>
-      <input type="text" id="notecliente" oninput="aggiornaStatoPrenota()">
+      <input type="text" id="notecliente" oninput="rimuoviErrore(this)">
+      <div id="err_notecliente" class="error-msg">Campo obbligatorio per questa selezione</div>
       
       <div id="wrapperData" style="display:none;">
         <label>DATA APPUNTAMENTO:</label>
-        <select id="dataAppuntamento" onchange="aggiornaRiconsegna()"></select>
+        <select id="dataAppuntamento" onchange="aggiornaRiconsegna(); rimuoviErrore(this)"></select>
+        <div id="err_dataAppuntamento" class="error-msg">Selezionare una data</div>
       </div>
 
       <div id="infoRiconsegna"></div>
@@ -132,14 +156,24 @@ let dateDisponibiliMontaggio = [];
 let dateDisponibiliAnomalia = [];
 
 async function init() {
+  console.log("=== INIZIALIZZAZIONE MODULO ===");
   try {
     const response = await fetch(API_URL + '?action=getAllData');
     const data = await response.json();
     dateDisponibiliMontaggio = data.dateMontaggio || [];
     dateDisponibiliAnomalia = data.dateAnomalia || [];
+    
+    // Modifica 5: Ripristinato il debug
+    console.log("Dati caricati con successo da Google Apps Script:");
+    console.log(`- Date Montaggio libere: ${dateDisponibiliMontaggio.length}`);
+    console.log(`- Date Anomalia libere: ${dateDisponibiliAnomalia.length}`);
+    
     document.getElementById('loadingOverlay').style.display = 'none';
     document.getElementById('formWrapper').style.display = 'block';
-  } catch (e) { alert("Errore caricamento date. Riprova."); }
+  } catch (e) { 
+    console.error("Errore di caricamento init:", e);
+    alert("Errore caricamento date. Ricarica la pagina."); 
+  }
 }
 
 function selezionaTipo(tipo) {
@@ -151,7 +185,25 @@ function selezionaTipo(tipo) {
   sel.innerHTML = '<option value="" disabled selected>Seleziona...</option>';
   const lista = tipo === 'assicurativo' ? COMPAGNIE_ASSICURATIVE : COMPAGNIE_MOVEIN;
   lista.forEach(c => { let o = document.createElement("option"); o.value = c; o.text = c; sel.add(o); });
+  
+  document.getElementById("err_tipo").style.display = 'none';
+  console.log("Tipologia selezionata:", tipo);
+  // Modifica 1: Tolto changeStep(1) automatico
+}
+
+function avantiStep1() {
+  if (!tipoLocalizzatoreSelezionato) {
+    document.getElementById("err_tipo").style.display = 'block';
+    return;
+  }
   changeStep(1);
+}
+
+// Funzione helper per togliere il rosso dal campo appena l'utente inizia a scrivere/selezionare
+function rimuoviErrore(elemento) {
+  elemento.classList.remove("input-error");
+  const errDiv = document.getElementById("err_" + elemento.id);
+  if (errDiv) errDiv.style.display = "none";
 }
 
 function changeStep(n) {
@@ -161,12 +213,38 @@ function changeStep(n) {
   document.getElementById(`step${currentStep}`).classList.add('step-active');
   document.getElementById(`step${currentStep}`).style.display = 'block';
   window.scrollTo(0,0);
+  console.log("Navigazione allo Step:", currentStep);
 }
 
+// Modifica 2: Nuova validazione inline con bordi rossi e testi
 function validaCampiStep() {
   if (currentStep === 2) {
-    const campi = ["email", "targa", "nomeCognome", "telefono", "compagnia"];
-    for(let id of campi) if(!document.getElementById(id).value.trim()) { alert("Attenzione: tutti i campi sono obbligatori"); return false; }
+    let valido = true;
+    
+    // Validazione Email (deve avere @ e .)
+    const email = document.getElementById("email");
+    const errEmail = document.getElementById("err_email");
+    const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!regexEmail.test(email.value.trim())) {
+      email.classList.add("input-error");
+      errEmail.style.display = "block";
+      valido = false;
+    }
+
+    // Validazione altri campi Step 2
+    const campiStandard = ["targa", "nomeCognome", "telefono", "compagnia"];
+    for (let id of campiStandard) {
+      const el = document.getElementById(id);
+      const errEl = document.getElementById("err_" + id);
+      if (!el.value.trim()) {
+        el.classList.add("input-error");
+        errEl.style.display = "block";
+        valido = false;
+      }
+    }
+    
+    if (!valido) console.log("Validazione fallita Step 2: completare campi obbligatori");
+    return valido;
   }
   return true;
 }
@@ -177,21 +255,28 @@ function aggiornaVisibilita() {
   const selData = document.getElementById("dataAppuntamento");
   const labelNote = document.getElementById("labelNoteCliente");
 
-  labelNote.textContent = lav === "smontmont" ? "SCRIVERE ENTRAMBE COMPAGNIE ASSICURATIVE QUA:" : (lav === "annullamento" ? "DATA E ORA DELL'APPUNTAMENTO DA ANNULLARE:" : "EVENTUALI NOTE CLIENTE:");
+  labelNote.textContent = lav === "smontmont" ? "SCRIVERE ENTRAMBE COMPAGNIE ASSICURATIVE QUA (OBBLIGATORIO):" : (lav === "annullamento" ? "DATA E ORA DELL'APPUNTAMENTO DA ANNULLARE (OBBLIGATORIO):" : "EVENTUALI NOTE CLIENTE:");
   
   if (lav && lav !== "annullamento") {
     wrap.style.display = "block";
     let base = lav === "anomalia" ? dateDisponibiliAnomalia : dateDisponibiliMontaggio;
     
-    // LOGICA DATE: No oggi, domani solo se smontaggio
+    // Modifica 4: Logica corrette date (nessuna oggi, domani solo se smontaggio)
     const oggi = new Date();
     const domani = new Date(); domani.setDate(oggi.getDate() + 1);
-    const sOggi = oggi.getDate().toString().padStart(2,'0') + "/" + (oggi.getMonth()+1).toString().padStart(2,'0');
-    const sDomani = domani.getDate().toString().padStart(2,'0') + "/" + (domani.getMonth()+1).toString().padStart(2,'0');
+    
+    // Formattiamo per confrontare l'inizio della stringa data fornita dal foglio excel (es: 22/10/...)
+    const strOggi = oggi.getDate().toString().padStart(2,'0') + "/" + (oggi.getMonth()+1).toString().padStart(2,'0');
+    const strDomani = domani.getDate().toString().padStart(2,'0') + "/" + (domani.getMonth()+1).toString().padStart(2,'0');
+    
+    console.log(`Filtro Date Applicato - Oggi: ${strOggi}, Domani: ${strDomani} - Lavorazione: ${lav}`);
 
     const filtrate = base.filter(d => {
-      if (d.includes(sOggi)) return false;
-      if (d.includes(sDomani)) return lav === "smontaggio";
+      // Usiamo startsWith oppure un match per sicurezza nel formato
+      if (d.includes(strOggi)) return false; // Nascondi sempre oggi
+      if (d.includes(strDomani)) {
+        return lav === "smontaggio"; // Mostra domani SOLO per smontaggio
+      }
       return true;
     });
 
@@ -202,7 +287,6 @@ function aggiornaVisibilita() {
     selData.value = "";
   }
   aggiornaRiconsegna();
-  aggiornaStatoPrenota();
 }
 
 function aggiornaRiconsegna() {
@@ -220,47 +304,79 @@ function aggiornaRiconsegna() {
     info.innerHTML = "data di riconsegna del veicolo stimata: " + dataTxt.replace(/\d{2}:\d{2}/, nuovaOra);
     info.style.display = "block";
   }
-  aggiornaStatoPrenota();
 }
 
-function aggiornaStatoPrenota() {
-  const btn = document.getElementById("btnPrenota");
-  const lav = document.getElementById("lavorazione").value;
-  const note = document.getElementById("notecliente").value.trim();
-  const data = document.getElementById("dataAppuntamento").value;
-  
-  let ok = (lav !== "");
-  if (lav === "annullamento" || lav === "smontmont") ok = ok && note !== "";
-  if (lav && lav !== "annullamento") ok = ok && data !== "";
-  
-  btn.disabled = !ok;
-}
-
+// Modifica 6 e 3: La funzione di invio ora valida l'ultimo step, fa il check date incrociato e poi invia
 async function verificaEinvia() {
-  const lav = document.getElementById("lavorazione").value;
-  const note = document.getElementById("notecliente").value.trim();
-  const dataScelta = document.getElementById("dataAppuntamento").value;
+  const elLavorazione = document.getElementById("lavorazione");
+  const elNote = document.getElementById("notecliente");
+  const elData = document.getElementById("dataAppuntamento");
+  
+  const lav = elLavorazione.value;
+  const note = elNote.value.trim();
+  const dataScelta = elData.value;
 
-  document.getElementById("sendingText").innerHTML = "Verifica disponibilità data...<br>Attendere...";
+  // Modifica 3: Validazione STEP 4 inline
+  let tuttoValido = true;
+  
+  if (!lav) {
+    elLavorazione.classList.add("input-error");
+    document.getElementById("err_lavorazione").style.display = "block";
+    tuttoValido = false;
+  }
+  
+  // Note obbligatorie in casi specifici
+  if (lav === "annullamento" || lav === "smontmont") {
+    if (!note) {
+      elNote.classList.add("input-error");
+      document.getElementById("err_notecliente").style.display = "block";
+      tuttoValido = false;
+    }
+  }
+
+  // Data obbligatoria se non è annullamento
+  if (lav && lav !== "annullamento" && !dataScelta) {
+    elData.classList.add("input-error");
+    document.getElementById("err_dataAppuntamento").style.display = "block";
+    tuttoValido = false;
+  }
+
+  if (!tuttoValido) {
+    console.log("Validazione Step 4 fallita.");
+    return;
+  }
+
+  // --- Modifica 6: Doppio controllo disponibilità data aggiornato ---
+  document.getElementById("sendingText").innerHTML = "Controllo disponibilità date in corso...<br>Attendere...";
   document.getElementById("sendingOverlay").style.display = "flex";
+  console.log("=== INIZIO CONTROLLO DISPONIBILITA' DATA ===");
+  console.log(`Data richiesta: ${dataScelta} per ${lav}`);
 
   try {
-    // DOPPIO CONTROLLO SICUREZZA
+    // 1. CHIEDE DI NUOVO LE DATE AL SERVER
     const response = await fetch(API_URL + '?action=getAllData');
     const checkData = await response.json();
+    console.log("Date aggiornate lette dal server:", checkData);
+    
     const dateAttuali = lav === "anomalia" ? checkData.dateAnomalia : checkData.dateMontaggio;
 
+    // 2. VERIFICA SE LA DATA È ANCORA PRESENTE
     if (lav !== "annullamento" && !dateAttuali.includes(dataScelta)) {
+      console.warn("ATTENZIONE: La data non è più disponibile!");
       document.getElementById("sendingOverlay").style.display = "none";
-      alert("⚠️ DATA OCCUPATA: La data scelta è stata appena prenotata. Seleziona un altro orario.");
-      dateDisponibiliMontaggio = checkData.dateMontaggio;
-      dateDisponibiliAnomalia = checkData.dateAnomalia;
-      aggiornaVisibilita();
-      return;
+      alert("⚠️ DATA NON PIÙ DISPONIBILE: La data che avevi scelto è appena stata prenotata da un altro utente. La lista è stata aggiornata, seleziona un nuovo orario.");
+      
+      // Mantiene i vecchi dati compilati, aggiorna solo la select delle date
+      dateDisponibiliMontaggio = checkData.dateMontaggio || [];
+      dateDisponibiliAnomalia = checkData.dateAnomalia || [];
+      aggiornaVisibilita(); // Rigenera le opzioni della tendina
+      return; 
     }
 
-    // INVIO EFFETTIVO
+    // 3. SE È DISPONIBILE -> INVIO EFFETTIVO
+    console.log("Data confermata disponibile. Procedo con l'invio.");
     document.getElementById("sendingText").innerHTML = "Invio dati in corso...<br>NON CHIUDERE LA PAGINA";
+    
     const payload = {
       email: document.getElementById("email").value.trim(),
       targa: document.getElementById("targa").value.trim().toUpperCase(),
@@ -272,17 +388,23 @@ async function verificaEinvia() {
       dataAppuntamento: dataScelta
     };
 
+    console.log("Dati in invio:", payload);
+
     const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'salvaPrenotazione', dati: payload }) });
     const result = await res.json();
+
+    console.log("Risposta server post invio:", result);
 
     if (result.success) {
       document.getElementById("formWrapper").style.display = "none";
       document.getElementById("successOverlay").style.display = "block";
+      console.log("=== PRENOTAZIONE COMPLETATA CON SUCCESSO ===");
     } else {
-      alert("Errore: " + result.error);
+      alert("Errore del server: " + result.error);
     }
   } catch (e) {
-    alert("Errore di connessione. Riprova.");
+    console.error("Errore di connessione durante verifica/invio:", e);
+    alert("Errore di connessione col server. Controlla la tua rete e riprova.");
   } finally {
     document.getElementById("sendingOverlay").style.display = "none";
   }
